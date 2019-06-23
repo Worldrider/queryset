@@ -37,7 +37,7 @@ var list = [
             },
         ],
     }, {
-        id: 2,
+        pk: 2,
         name: "Jane Smith",
         profile: {
             created_at: "13/09/2019",
@@ -54,12 +54,12 @@ var list = [
                         id: 5,
                         amount: 100,
                     }, {
-                        id: 6,
+                        pk: 6,
                         amount: 400,
                     },
                 ]
             }, {
-                id: 4,
+                pk: 4,
                 amount: 1000,
                 date: "18/05/2019",
                 items: [
@@ -74,20 +74,20 @@ var list = [
             },
         ],
     }, {
-        id: 3,
         name: "Admin",
         profile: {
             created_at: "13/01/2019",
             active: true,
             kudos: 1000,
         },
+        pk: 3,
     },
 ]
 
 var qs = new QuerySet(list)
 
 function assertEqual(a, b) {
-    if (a != b) {
+    if (JSON.stringify(a) != JSON.stringify(b)) {
         // console.error(`${a} is not equal ${b}`)
         throw new Error(`${a} is not equal ${b}`)
     }
@@ -99,9 +99,18 @@ function assertIsNotNull(x) {
     }
 }
 
+assertEqual(qs.values_list("id"), [1, 2, 3])
+assertEqual(qs.values_list("pk"), [1, 2, 3])
+assertEqual(qs.values_list("name"), ["John Doe", "Jane Smith", "Admin"])
+assertEqual(qs.values_list("invoices__id"), [1, 2, 3, 4])
+assertEqual(qs.values_list("invoices__pk"), [1, 2, 3, 4])
+assertEqual(qs.values_list("invoices__items__id"), [1, 2, 3, 4, 5, 6, 7, 8])
+assertEqual(qs.values_list("invoices__items__pk"), [1, 2, 3, 4, 5, 6, 7, 8])
 assertEqual(qs.filter({profile__active: true}).count(), 2)
 assertEqual(qs.sum("invoices__amount"), 1700)
 assertEqual(qs.sum("invoices__items__amount"), 1700)
+assertEqual(qs.min("invoices__items__amount"), 50)
+assertEqual(qs.max("invoices__items__amount"), 900)
 assertEqual(qs.filter({id: 1}).first().name, "John Doe")
 assertEqual(qs.filter({id: 1}).count(), 1)
 assertEqual(qs.filter({invoices__items__amount: 50}).first().name, "John Doe")
@@ -109,11 +118,16 @@ assertEqual(qs.filter({name__not: "Admin"}).first().name, "John Doe")
 assertEqual(qs.filter({name__not: "Admin"}).count(), 2)
 assertEqual(qs.filter({name__not: "Admin"}).first().name, "John Doe")
 assertEqual(qs.filter({name__icontains: "adm"}).first().name, "Admin")
-assertEqual(qs.filter({name__iexact: "Admin"}).first().name, "Admin")
+assertEqual(qs.filter({name__exact: "Admin"}).first().name, "Admin")
+assertEqual(qs.filter({name__iexact: "admin"}).first().name, "Admin")
 assertEqual(qs.filter({invoices__not: null}).count(), 2)
 assertEqual(qs.filter({invoices: null}).count(), 1)
 assertEqual(qs.filter({invoices: null}).first().name, "Admin")
 assertEqual(qs.filter({invoices__amount: null}).first().name, "Admin")
+assertEqual(qs.filter({name__startswith: "Adm"}).first().name, "Admin")
+assertEqual(qs.filter({name__istartswith: "adm"}).first().name, "Admin")
+assertEqual(qs.filter({name__endswith: "Doe"}).first().name, "John Doe")
+assertEqual(qs.filter({name__iendswith: "doe"}).first().name, "John Doe")
 assertEqual(qs.filter({invoices__isnull: false}).count(), 2)
 assertEqual(qs.filter({invoices__isnull: true}).count(), 1)
 assertEqual(qs.filter({invoices__isnull: true}).first().name, "Admin")
@@ -127,16 +141,18 @@ assertEqual(qs.filter({invoices__amount__gte: 500}).count(), 1)
 assertEqual(qs.filter({invoices__amount__gte: 500}).first().name, "Jane Smith")
 assertEqual(qs.filter({invoices__date__gte: "17/11/2019"}).count(), 1)
 assertEqual(qs.filter({invoices__date__gte: "17/11/2019"}).first().name, "John Doe")
-assertEqual(qs.filter({name__icontains: "Jane"}).count(), 1)
-assertEqual(qs.filter({name__icontains: "Jane"}).first().name, "Jane Smith")
+assertEqual(qs.filter({name__icontains: "jane"}).count(), 1)
+assertEqual(qs.filter({name__contains: "Jane"}).count(), 1)
+assertEqual(qs.filter({name__icontains: "jane"}).first().name, "Jane Smith")
+assertEqual(qs.filter({name__contains: "Jane"}).first().name, "Jane Smith")
 assertEqual(qs.exclude({name__icontains: "Jane"}).count(), 2)
 assertEqual(qs.exclude({name__icontains: "Jane"}).first().name, "John Doe")
 assertEqual(qs.filter({name__in: ["Jane Smith", "Admin"]}).count(), 2)
 assertEqual(qs.filter({name__in: ["Jane Smith", "Admin"]}).first().name, "Jane Smith")
 assertEqual(qs.filter({pk__in: [1, 2]}).count(), 2)
 assertEqual(qs.filter({pk__in: [1, 2]}).first().name, "John Doe")
-assertEqual(qs.filter({name__not_in: ["Jane Smith", "Admin"]}).count(), 1)
-assertEqual(qs.filter({name__not_in: ["Jane Smith", "Admin"]}).first().name, "John Doe")
+assertEqual(qs.exclude({name__in: ["Jane Smith", "Admin"]}).count(), 1)
+assertEqual(qs.exclude({name__in: ["Jane Smith", "Admin"]}).first().name, "John Doe")
 assertEqual(qs.exclude({id: 1}).first().name, "Jane Smith")
 assertEqual(qs.exclude({id: 1}).count(), 2)
 assertEqual(qs.filter({pk: 1}).first().name, "John Doe")
@@ -164,20 +180,19 @@ assertEqual(qs.filter({invoices__id__in: [1, 2]}).count(), 1)
 assertEqual(qs.filter({invoices__id__in: [1, 2, 3]}).count(), 2)
 assertEqual(qs.filter({invoices__id__in: [1, 2, 3], profile__active: true}).count(), 1)
 assertEqual(qs.filter({invoices__id__in: [1, 2, 3], profile__active: true}, {name__icontains: "ad"}).count(), 2)
+assertEqual(qs.filter({invoices__items__amount__range: [100, 1000]}).count(), 1)
+assertEqual(qs.values_list("invoices").filter({date__range: ["18/05/2019", "13/12/2019"]}).count(), 3)
+assertEqual(qs.values_list("invoices").min("date"), "15/03/2019")
+assertEqual(qs.values_list("invoices").max("date"), "13/12/2019")
+assertEqual(qs, qs.toArray())
 
 qs.setConfig({separator: "."})
 
 assertEqual(qs.filter({"profile.active": true}).count(), 2)
+assertEqual(qs.filter({"profile.active": true}).filter({"invoices.pk.in": [1, 2]}).count(), 1)
+assertEqual(qs.filter({"profile.active": true}).filter({"invoices.pk.in": [1, 2]}).values_list("name"), ["John Doe"])
+assertEqual(qs.filter({"profile.active": true}).filter({"invoices.pk.in": [1, 2]}).values_list("name").separator, ".")
 qs.setConfig({separator: "__"})
-
-for (var item of qs) {
-    assertIsNotNull(item)
-}
-for (var i = 0; i < qs.length; i++) {
-    assertIsNotNull(qs[i])
-}
-assertIsNotNull(qs[0])
-assertIsNotNull(qs[1])
 
 qs.add(list[2])
 assertEqual(qs.count(), 4)
@@ -191,6 +206,5 @@ assertEqual(qs.exists(), true)
 
 qs.delete()
 assertEqual(qs.count(), 0)
-console.log("All tests are passing");
 
 qs = new QuerySet(list)

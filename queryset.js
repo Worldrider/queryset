@@ -1,6 +1,6 @@
 /**
  * --------------------------------------------------------------------------
- * QuerySet (v1.0.0): queryset.js
+ * QuerySet (v1.0.1): queryset.js
  * Licensed under MIT (https://github.com/Worldrider/queryset/blob/master/LICENSE.txt)
  * --------------------------------------------------------------------------
  */
@@ -15,10 +15,27 @@ class QuerySet extends Array {
     * e.g. qs.exclude({invoices__date__lte: "15/03/2019"})
     *
     * TODO:
+    * - queries:
+    *    - date queries:
+    *       - year
+    *       - month
+    *       - day
+    *       - week
+    *       - week_day
+    *       - quarter
+    *       - hour
+    *       - minute
+    *       - second
+    *    - regex
+    *    - iregex
+    * - chaining date queries: start_date___year__gte=2019
+    * - detect properties which include separator: property__including__separator
     * - values_list flat option (right now it is always flat)
     * - add exceptions on invalid queries
     * - support multiple separators ?
     * - handle dates independently from moment.js ?
+    * - implement StdDev ?
+    * - implement Variance ?
     */
 
     constructor() {
@@ -57,6 +74,15 @@ class QuerySet extends Array {
             ]
         }
     }
+    getConfig () {
+        /*
+        * Get current options
+        */
+        return {
+            "separator": this.separator,
+            "date_formats": this.date_formats,
+        }
+    }
     get (query) {
         /*
         * Get by id or find by condition
@@ -90,6 +116,7 @@ class QuerySet extends Array {
                 }
             }
         }
+        return this
     }
     getFilter (item, query, match, separator, date_formats) {
         /*
@@ -176,15 +203,51 @@ class QuerySet extends Array {
                             } else if (value == false) {
                                 return !isEmpty(obj)
                             }
+                        } else if (key == "startswith") {
+                            if (obj != null && obj.constructor === String && value != null && value.constructor === String) {
+                                if (obj.trim().startsWith(value.trim())) {
+                                    return true
+                                }
+                            }
+                        } else if (key == "istartswith") {
+                            if (obj != null && obj.constructor === String && value != null && value.constructor === String) {
+                                if (obj.trim().toLowerCase().startsWith(value.trim().toLowerCase())) {
+                                    return true
+                                }
+                            }
+                        } else if (key == "endswith") {
+                            if (obj != null && obj.constructor === String && value != null && value.constructor === String) {
+                                if (obj.trim().endsWith(value.trim())) {
+                                    return true
+                                }
+                            }
+                        } else if (key == "iendswith") {
+                            if (obj != null && obj.constructor === String && value != null && value.constructor === String) {
+                                if (obj.trim().toLowerCase().endsWith(value.trim().toLowerCase())) {
+                                    return true
+                                }
+                            }
+                        } else if (key == "contains") {
+                            if (obj != null && obj.constructor === String && value != null && value.constructor === String) {
+                                if (obj.trim().indexOf(value.trim()) !== -1) {
+                                    return true
+                                }
+                            }
                         } else if (key == "icontains") {
                             if (obj != null && obj.constructor === String && value != null && value.constructor === String) {
                                 if (obj.trim().toLowerCase().indexOf(value.trim().toLowerCase()) !== -1) {
                                     return true
                                 }
                             }
-                        } else if (key == "iexact") {
+                        } else if (key == "exact") {
                             if (obj != null && obj.constructor === String && value != null && value.constructor === String) {
                                 if (obj.trim() == value.trim()) {
+                                    return true
+                                }
+                            }
+                        } else if (key == "iexact") {
+                            if (obj != null && obj.constructor === String && value != null && value.constructor === String) {
+                                if (obj.trim().toLowerCase() == value.trim().toLowerCase()) {
                                     return true
                                 }
                             }
@@ -196,15 +259,30 @@ class QuerySet extends Array {
                                     }
                                 }
                             }
-                        } else if (key == "not_in") {
+                        } else if (key == "range") {
                             if (value != null && Array.isArray(value)) {
-                                for (var k = 0; k < value.length; k++) {
-                                    if (obj == value[k]) {
-                                        return false
+                                var left = value[0]
+                                var right = value[value.length - 1]
+                                var x = QuerySet.parseDate(obj, date_formats)
+                                var a = QuerySet.parseDate(left, date_formats)
+                                var b = QuerySet.parseDate(right, date_formats)
+                                if (a && b) {
+                                    if (x >= a && x <= b) {
+                                        return true
                                     }
+                                } else if (obj >= left && obj <= right) {
+                                    return true
                                 }
-                                return true
                             }
+                        // } else if (key == "not_in") {
+                        //     if (value != null && Array.isArray(value)) {
+                        //         for (var k = 0; k < value.length; k++) {
+                        //             if (obj == value[k]) {
+                        //                 return false
+                        //             }
+                        //         }
+                        //         return true
+                        //     }
                         } else if (key == "lt") {
                             if (value != null) {
                                 var a = QuerySet.parseDate(obj, date_formats)
@@ -296,14 +374,18 @@ class QuerySet extends Array {
         * returns new QuerySet
         */
         if (arguments.length == 1 && arguments[0] instanceof Function) {
-            return super.filter(arguments[0])
+            var ret = super.filter(arguments[0])
+            ret.setConfig(this.getConfig())
+            return ret;
         }
         var query = []
         for (var i = 0; i < arguments.length; i++) {
             query.push(arguments[i])
         }
         if (!query.length) {
-            return new QuerySet(this)
+            var ret = new QuerySet(this)
+            ret.setConfig(this.getConfig())
+            return ret;
         }
         if (!Array.isArray(query)) {
             query = [query]
@@ -311,7 +393,7 @@ class QuerySet extends Array {
         var separator = this.separator
         var date_formats = this.date_formats
         var filter = this.getFilter
-        return this.filter(function(item) {
+        var ret = this.filter(function(item) {
             for (var i = 0; i < query.length; i++) {
                 if (filter(item, query[i], true, separator, date_formats)) {
                     return true
@@ -319,6 +401,8 @@ class QuerySet extends Array {
             }
             return false
         });
+        ret.setConfig(this.getConfig())
+        return ret;
     }
     exclude () {
         /*
@@ -330,7 +414,9 @@ class QuerySet extends Array {
             query.push(arguments[i])
         }
         if (!query.length) {
-            return new QuerySet(this)
+            var ret = new QuerySet(this)
+            ret.setConfig(this.getConfig())
+            return ret;
         }
         if (!Array.isArray(query)) {
             query = [query]
@@ -338,7 +424,7 @@ class QuerySet extends Array {
         var separator = this.separator
         var date_formats = this.date_formats
         var filter = this.getFilter
-        return new QuerySet(this.filter(function(item) {
+        var ret = new QuerySet(this.filter(function(item) {
             for (var i = 0; i < query.length; i++) {
                 if (filter(item, query[i], false, separator, date_formats)) {
                     return true
@@ -346,6 +432,8 @@ class QuerySet extends Array {
             }
             return false
         }));
+        ret.setConfig(this.getConfig())
+        return ret;
     }
     remove (query) {
         /*
@@ -419,8 +507,9 @@ class QuerySet extends Array {
         for (var i = 0; i < this.length; i++) {
             getNested(this[i], sub_queries, values)
         }
-
-        return new QuerySet(values);
+        var ret = new QuerySet(values)
+        ret.setConfig(this.getConfig())
+        return ret;
     }
     sum (query) {
         /*
@@ -439,6 +528,40 @@ class QuerySet extends Array {
             return 0
         }
         return this.sum(field) / this.length;
+    }
+    min (query) {
+        /*
+        * Get average of field in QuerySet
+        */
+        if (!this.length) {
+            return null
+        }
+        var date_formats = this.date_formats
+        return this.values_list(query).reduce(function(m, x) {
+            var a = QuerySet.parseDate(m, date_formats)
+            var b = QuerySet.parseDate(x, date_formats)
+            if (a && b) {
+                return a < b ? m : x
+            }
+            return m < x ? m : x
+        })
+    }
+    max (query) {
+        /*
+        * Get average of field in QuerySet
+        */
+        if (!this.length) {
+            return null
+        }
+        var date_formats = this.date_formats
+        return this.values_list(query).reduce(function(m, x) {
+            var a = QuerySet.parseDate(m, date_formats)
+            var b = QuerySet.parseDate(x, date_formats)
+            if (a && b) {
+                return a > b ? m : x
+            }
+            return m > x ? m : x
+        })
     }
     order_by () {
         /*
@@ -607,6 +730,6 @@ class QuerySet extends Array {
         return null;
     }
     toArray () {
-        return new Array(this)
+        return Array.from(this)
     }
 }

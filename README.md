@@ -1,12 +1,13 @@
 ## Overview
 
-```queryset.js``` is a data structure with Django QuerySet-like syntax
+```queryset.js``` is a data structure with [Django QuerySet](https://docs.djangoproject.com/en/2.2/ref/models/querysets/)-like syntax
 
-it is designed primarily to manipulate Django Rest Framework ViewSet response
+it is designed primarily to manipulate [Django Rest Framework](https://www.django-rest-framework.org/) [ViewSet](https://www.django-rest-framework.org/api-guide/viewsets/) response
 
 Supported lookups:
 ```javascript
-not, isnull, icontains, iexact, in, not_in, lt, lte, gt, gte
+not, isnull, in, range, lt, lte, gt, gte,
+startswith, istartswith, endswith, iendswith, contains, icontains, exact, iexact
 ```
 
 
@@ -26,14 +27,16 @@ qs.filter({invoices__amount__gt: 100})
 qs.filter({invoices__amount__lt: 500})
 qs.filter({invoices__amount__gte: 500})
 qs.filter({invoices__date__gte: "17/11/2019"})  // filter by date
+qs.filter({name__contains: "Jane"})  // case-sensitive
 qs.filter({name__icontains: "jane"})  // case-insensitive
-qs.exclude({name__iexact: "Jane Smith"})  // case-sensitive
+qs.exclude({name__exact: "Jane Smith"})  // case-sensitive
 qs.filter({name__in: ["Jane Smith", "Admin"]})
 qs.filter({pk__in: [1, 2]})  // work the same way
 qs.filter({id__in: [1, 2]})  // work the same way
-qs.filter({name__not_in: ["Jane Smith", "Admin"]})
-qs.filter({name__not_in: ["Jane Smith", "Admin"]})
+qs.exclude({name__in: ["Jane Smith", "Admin"]})
+qs.exclude({name__in: ["Jane Smith", "Admin"]})
 qs.filter({id: 1}, {name: "Admin"})  // OR query
+qs.min("profile__created_at")
 qs.order_by("-profile__active")
 qs.order_by("id", "profile__active")
 
@@ -69,6 +72,9 @@ qs.toArray()
 .order_by("date")
 .filter({date__gte: "13/01/2019"})
 ```
+
+
+#### [More examples](https://github.com/Worldrider/queryset/blob/master/tests.js)
 
 
 ## Documentation
@@ -175,6 +181,22 @@ qs.values_list("invoices").sum("amount")</code></pre>
             <td>Get average of field in queryset</td>
             <td>
                 <pre lang="javascript"><code>.avg("profile__likes_count")</code></pre>
+            </td>
+        </tr>
+        <tr>
+            <td>min</td>
+            <td>Get min value of field in queryset</br>
+Works with dates too</td>
+            <td>
+                <pre lang="javascript"><code>.min("date")</code></pre>
+            </td>
+        </tr>
+        <tr>
+            <td>max</td>
+            <td>Get max value of field in queryset</br>
+Works with dates too</td>
+            <td>
+                <pre lang="javascript"><code>.max("amount")</code></pre>
             </td>
         </tr>
         <tr>
@@ -305,11 +327,28 @@ Defaults are:
 
 
 ### TODO
+- queries:
+   - date queries:
+      - year
+      - month
+      - day
+      - week
+      - week_day
+      - quarter
+      - hour
+      - minute
+      - second
+   - regex
+   - iregex
+- chaining date queries: ```start_date___year__gte=2019```
+- detect properties which include separator: ```property__including__separator```
 - values_list ```flat``` option (right now it is always flat)
 - add exceptions on invalid queries
 - global settings ?
 - support multiple separators ?
 - handle dates independently from [moment.js](https://momentjs.com/) ?
+- implement StdDev ?
+- implement Variance ?
 
 
 ## License
