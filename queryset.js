@@ -1,6 +1,6 @@
 /**
  * --------------------------------------------------------------------------
- * QuerySet (v1.0.1): queryset.js
+ * QuerySet (v1.0.2): queryset.js
  * Licensed under MIT (https://github.com/Worldrider/queryset/blob/master/LICENSE.txt)
  * --------------------------------------------------------------------------
  */
@@ -41,9 +41,7 @@ class QuerySet extends Array {
     constructor() {
         let initial = []
         if (arguments.length == 1 && Array.isArray(arguments[0])) {
-            for (var i = 0; i < arguments[0].length; i++) {
-                initial.push(arguments[0][i])
-            }
+            initial = Array.from(arguments[0])
         } else {
             initial = Array.from(arguments)
         }
@@ -468,7 +466,7 @@ class QuerySet extends Array {
         * TODO: flat option (right now it is always flat)
         */
         if (!this.length) {
-            return []
+            return new QuerySet([])
         }
         var separator = this.separator
         var sub_queries = query.split(separator)
@@ -518,7 +516,11 @@ class QuerySet extends Array {
         if (!this.length) {
             return 0
         }
-        return this.values_list(query).reduce((total, cuurent) => total + cuurent)
+        var values_list = this.values_list(query)
+        if (!values_list.length) {
+            return null
+        }
+        return values_list.reduce((total, cuurent) => total + cuurent)
     }
     avg (query) {
         /*
@@ -537,7 +539,11 @@ class QuerySet extends Array {
             return null
         }
         var date_formats = this.date_formats
-        return this.values_list(query).reduce(function(m, x) {
+        var values_list = this.values_list(query)
+        if (!values_list.length) {
+            return null
+        }
+        return values_list.reduce(function(m, x) {
             var a = QuerySet.parseDate(m, date_formats)
             var b = QuerySet.parseDate(x, date_formats)
             if (a && b) {
@@ -554,7 +560,11 @@ class QuerySet extends Array {
             return null
         }
         var date_formats = this.date_formats
-        return this.values_list(query).reduce(function(m, x) {
+        var values_list = this.values_list(query)
+        if (!values_list.length) {
+            return null
+        }
+        return values_list.reduce(function(m, x) {
             var a = QuerySet.parseDate(m, date_formats)
             var b = QuerySet.parseDate(x, date_formats)
             if (a && b) {
@@ -636,6 +646,59 @@ class QuerySet extends Array {
         }
         return this
     }
+    distinct () {
+        var fields = []
+        for (var i = 0; i < arguments.length; i++) {
+            fields.push(arguments[i])
+        }
+        if (!fields.length) {
+            var set = new Set(this)
+            return new QuerySet(Array.from(set))
+        }
+
+        var separator = this.separator
+        function getNested (obj, path) {
+            for (var i = 0; i < path.length; i++) {
+                if (obj.hasOwnProperty(path[i]) || ((path[i] == "id" || path[i] == "pk") && QuerySet.get_pk(obj))) {
+                    // automatically check both 'id' or 'pk' if either present in parameters
+                    if ((path[i] == "id" || path[i] == "pk") && QuerySet.get_pk(obj)) {
+                        obj = QuerySet.get_pk(obj)
+                    } else {
+                        // TODO
+                        if (Array.isArray(obj[path[i]])) {
+                            return obj
+                        }
+                        // TODO
+                        // if (i == path.length - 1 && obj[path[i]].constructor == Object) {
+                        //     return obj
+                        // }
+                        obj = obj[path[i]]
+                    }
+                } else {
+                    break
+                }
+            }
+            return obj
+        }
+
+        let results = new QuerySet();
+        for (const item of this) {
+            var is_distinct = true
+            for (var i = 0; i < fields.length; i++) {
+                var args = {}
+                var path = fields[i].split(separator)
+                args[fields[i]] = getNested(item, path)
+                if (results.filter(args).exists()) {
+                    is_distinct = false
+                }
+            }
+            if (is_distinct) {
+                results.append(item);
+            }
+        }
+        var set = new Set(results)
+        return new QuerySet(Array.from(set))
+    }
 
     /*
     * For the sake of similarity with Django QuerySet and python list
@@ -690,7 +753,7 @@ class QuerySet extends Array {
         /*
         * Return true if queryset has at least 1 object
         */
-        return this.length > 1
+        return this.length != 0
     }
     count () {
         /*

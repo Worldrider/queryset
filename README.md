@@ -38,8 +38,8 @@ qs.exclude({name__in: ["Jane Smith", "Admin"]})
 qs.filter({id: 1}, {name: "Admin"})  // OR query
 qs.min("profile__created_at")
 qs.order_by("-profile__active")
-qs.order_by("id", "profile__active")
-
+qs.order_by("id", "profile__active").distinct("id", "amount")
+qs.distinct("profile__created_at")
 
 // QuerySet is extending Array, not breaking any native Array functionality
 for (var item of qs) {
@@ -48,11 +48,6 @@ for (var item of qs) {
 for (var i = 0; i < qs.length; i++) {
     qs[i]
 }
-
-qs[0]
-qs[1]
-
-qs.length
 // .filter() can be used same as Array.filter
 qs.filter(function(item){ return item.name == "Admin" })
 qs.map(item => item.name).join(', ')
@@ -208,6 +203,18 @@ Works with dates too</td>
             <td>
                 <pre lang="javascript"><code>.order_by("profile__active")
 .order_by("id", "amount")</code></pre>
+            </td>
+        </tr>
+        <tr>
+            <td>distinct</td>
+            <td>
+                Return unique items of queryset</br>
+                Can be applied accross multiple fields</br>
+                <b><i>Does not support nested lists, only by objects</b></i>
+            </td>
+            <td>
+                <pre lang="javascript"><code>.distinct("name")
+.distinct("id", "amount")</code></pre>
             </td>
         </tr>
         <tr>

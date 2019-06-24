@@ -2,7 +2,9 @@ var list = [
     {
         id: 1,
         name: "John Doe",
+        group: "users",
         profile: {
+            locale: "en",
             created_at: "13/11/2019",
             active: true,
             kudos: 42,
@@ -39,7 +41,9 @@ var list = [
     }, {
         pk: 2,
         name: "Jane Smith",
+        group: "users",
         profile: {
+            locale: "en",
             created_at: "13/09/2019",
             active: false,
             kudos: 100,
@@ -75,7 +79,9 @@ var list = [
         ],
     }, {
         name: "Admin",
+        group: "users",
         profile: {
+            locale: "en",
             created_at: "13/01/2019",
             active: true,
             kudos: 1000,
@@ -185,6 +191,7 @@ assertEqual(qs.values_list("invoices").filter({date__range: ["18/05/2019", "13/1
 assertEqual(qs.values_list("invoices").min("date"), "15/03/2019")
 assertEqual(qs.values_list("invoices").max("date"), "13/12/2019")
 assertEqual(qs, qs.toArray())
+assertEqual(qs.filter({invoices__id__in: [1, 2, 3], profile__active: true}).exclude({name__icontains: "Adm"}).count(), 1)
 
 qs.setConfig({separator: "."})
 
@@ -203,8 +210,23 @@ assertEqual(qs.count(), 5)
 qs.extend(list)
 assertEqual(qs.count(), 8)
 assertEqual(qs.exists(), true)
+assertEqual(qs.distinct().count(), 3)
+assertEqual(qs.values_list("invoices__items__pk").distinct().count(), 8)
+assertEqual(qs.distinct("name").count(), 3)
+assertEqual(qs.distinct("profile__created_at").count(), 3)
+assertEqual(qs.distinct("profile__active").count(), 2)
+assertEqual(qs.distinct("name", "id").count(), 3)
+assertEqual(qs.distinct("name", "pk").count(), 3)
+assertEqual(qs.distinct("profile__locale").count(), 1)
+assertEqual(qs.distinct("profile__locale", "pk").count(), 1)
+assertEqual(qs.distinct("group").count(), 1)
+assertEqual(qs.distinct("profile__locale", "group").count(), 1)
 
 qs.delete()
 assertEqual(qs.count(), 0)
+assertEqual(qs.values_list("invoices").min("date"), null)
+assertEqual(qs.values_list("invoices").max("date"), null)
+assertEqual(qs.values_list("invoices").sum("amount"), 0)
+assertEqual(qs.values_list("invoices").avg("amount"), 0)
 
 qs = new QuerySet(list)
