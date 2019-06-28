@@ -15,44 +15,54 @@ startswith, istartswith, endswith, iendswith, contains, icontains, exact, iexact
 ```javascript
 var qs = new QuerySet(list)
 
-qs.filter({profile__active: true}).values_list("name")
-qs.sum("invoices__items__amount")  // aggregate nested arrays
-qs.avg("profile__likes_count")
-qs.filter({invoices__items__amount: 50})  // query by nested arrays
-qs.filter({name__not: "Admin"})
-qs.filter({invoices__not: null})
-qs.filter({invoices: null})
-qs.filter({invoices__amount: null})
-qs.filter({invoices__amount__gt: 100})
-qs.filter({invoices__amount__lt: 500})
-qs.filter({invoices__amount__gte: 500})
-qs.filter({invoices__date__gte: "17/11/2019"})  // filter by date
-qs.filter({name__contains: "Jane"})  // case-sensitive
-qs.filter({name__icontains: "jane"})  // case-insensitive
-qs.exclude({name__exact: "Jane Smith"})  // case-sensitive
-qs.filter({name__in: ["Jane Smith", "Admin"]})
-qs.filter({pk__in: [1, 2]})  // work the same way
-qs.filter({id__in: [1, 2]})  // work the same way
-qs.exclude({name__in: ["Jane Smith", "Admin"]})
-qs.exclude({name__in: ["Jane Smith", "Admin"]})
-qs.filter({id: 1}, {name: "Admin"})  // OR query
-qs.min("profile__created_at")
-qs.order_by("-profile__active")
-qs.order_by("id", "profile__active").distinct("id", "amount")
-qs.distinct("profile__created_at")
+qs.filter({profile__active: true}).values_list("name").distinct()
+// aggregate nested arrays
+qs.sum("invoices__items__amount")
+// filter by nested arrays
+qs.filter({invoices__items__amount__range: [100, 500]})
+qs.filter({author__not: "John Doe"})
+// nested array not empty
+qs.filter({posts__not: null})
+// nested array empty
+qs.filter({posts: null})
 
-// QuerySet is extending Array, not breaking any native Array functionality
-for (var item of qs) {
-    item
-}
-for (var i = 0; i < qs.length; i++) {
-    qs[i]
-}
+qs.distinct("profile__id")
+  .values_list("posts")
+  .filter({
+    likes_count__gt: 100,
+    date__gte: "17/11/2019"
+  })
+  .order_by("-likes_count")
+
+// OR query
+qs.filter(
+    {likes_count__gt: 20},
+    {author__contains: "Jane"}
+)
+
+qs.filter({author__contains: "Jane"})  // case-sensitive
+qs.filter({author__icontains: "jane"})  // case-insensitive
+qs.exclude({author__exact: "Jane Smith"})  // case-sensitive
+
+// 'pk' and 'id' work the same way
+qs.filter({pk__in: [1, 2]})
+qs.filter({id__in: [1, 2]})
+
+// QuerySet is inheriting Array
+// but does not break Array functionality
 // .filter() can be used same as Array.filter
 qs.filter(function(item){ return item.name == "Admin" })
+
+// and all other Array features too
+for (var item of qs) {
+  item
+}
+for (var i = 0; i < qs.length; i++) {
+  qs[i]
+}
 qs.map(item => item.name).join(', ')
 qs.reduce(function(previousValue, currentValue, index, array){
-    return previousValue + currentValue;
+  return previousValue + currentValue;
 })
 qs.forEach(function(item){ /***/ })
 // and so on
@@ -107,7 +117,9 @@ qs.toArray()
         </tr>
         <tr>
             <td>update</td>
-            <td>Update set of fields on all objects in queryset</td>
+            <td>Update set of fields on all objects in queryset
+</br>
+Or update a single element if 'id' or 'pk' is there</td>
             <td>
                 <pre lang="javascript"><code>.update({amount: 1000})
 </br>
@@ -116,6 +128,9 @@ qs.toArray()
 </br>
 // this will create 'invoices__amount'
 // property on every object in queryset
+</br>
+// this will update single element
+.update({id: 42, name: "John Doe"})
 </code></pre>
             </td>
         </tr>
@@ -130,12 +145,12 @@ if pass function as a parameter it works as Array.filter</td>
                 <pre lang="javascript"><code>.filter({invoices__amount__gt: 100})
 // OR
 .filter(
-    {name__icontains: "Jane"},
-    {likes_count__gt: 42}
+  {name__icontains: "Jane"},
+  {likes_count__gt: 42}
 )</br></br>
 // can be used same as Array.filter
 .filter(function(item) {
-    return item.name == "Admin"
+  return item.name == "Admin"
 })</code></pre>
             </td>
         </tr>
@@ -229,8 +244,8 @@ Works with dates too</td>
             <td>Add multiple objects to queryset</td>
             <td>
                 <pre lang="javascript"><code>.extend([
-    {id: 1, name: "Jane"},
-    {id: 2, name: "John"},
+  {id: 1, name: "Jane"},
+  {id: 2, name: "John"},
 ])</code></pre>
             </td>
         </tr>
@@ -293,8 +308,7 @@ Works with dates too</td>
             <td>separator</td>
             <td>Symbol used to split nested fields and lookups</td>
             <td>
-                <pre lang="javascript"><code>var qs = new QuerySet(list)
-qs.setConfig({separator: "."})
+                <pre lang="javascript"><code>QuerySet.setConfig({separator: "."})
 </br>
 qs.filter({"invoices.total.gte": 100})
 qs.sum("invoices.items.amount")</code></pre>
@@ -305,27 +319,26 @@ qs.sum("invoices.items.amount")</code></pre>
             <td>Formats that will be tried to parse date </br>
 NOTE: it will only work if you use <b><a href="https://momentjs.com/">moment.js</a></b></td>
             <td>
-                <pre lang="javascript"><code>var qs = new QuerySet(list)
-qs.setConfig({date_formats: [
-    "YYYY-MM-DD", "YYYY.MM.DD",
+                <pre lang="javascript"><code>QuerySet.setConfig({date_formats: [
+  "YYYY-MM-DD", "YYYY.MM.DD",
 ]})
 </br>
 qs.filter({date: "2019-11-17"})</code></pre>
 Defaults are:
                 <pre lang="javascript"><code>[
-    "DD/MM/YYYY",
-    "DD-MM-YYYY",
-    "DD.MM.YYYY",
-    "DD/MM/YYYY HH:mm",
-    "DD-MM-YYYY HH:mm",
-    "DD.MM.YYYY HH:mm",
-    "YYYY-MM-DDThh:mm:ss"
-    "YYYY/MM/DD",
-    "YYYY-MM-DD",
-    "YYYY.MM.DD",
-    "YYYY/MM/DD HH:mm",
-    "YYYY-MM-DD HH:mm",
-    "YYYY.MM.DD HH:mm",
+  "DD/MM/YYYY",
+  "DD-MM-YYYY",
+  "DD.MM.YYYY",
+  "DD/MM/YYYY HH:mm",
+  "DD-MM-YYYY HH:mm",
+  "DD.MM.YYYY HH:mm",
+  "YYYY-MM-DDThh:mm:ss"
+  "YYYY/MM/DD",
+  "YYYY-MM-DD",
+  "YYYY.MM.DD",
+  "YYYY/MM/DD HH:mm",
+  "YYYY-MM-DD HH:mm",
+  "YYYY.MM.DD HH:mm",
 ]</code></pre>
             </td>
         </tr>
@@ -351,7 +364,6 @@ Defaults are:
 - detect properties which include separator: ```property__including__separator```
 - values_list ```flat``` option (right now it is always flat)
 - add exceptions on invalid queries
-- global settings ?
 - support multiple separators ?
 - handle dates independently from [moment.js](https://momentjs.com/) ?
 - implement StdDev ?

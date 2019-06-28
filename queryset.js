@@ -1,6 +1,6 @@
 /**
  * --------------------------------------------------------------------------
- * QuerySet (v1.0.2): queryset.js
+ * QuerySet (v1.0.3): queryset.js
  * Licensed under MIT (https://github.com/Worldrider/queryset/blob/master/LICENSE.txt)
  * --------------------------------------------------------------------------
  */
@@ -39,46 +39,50 @@ class QuerySet extends Array {
     */
 
     constructor() {
+        super()
         let initial = []
         if (arguments.length == 1 && Array.isArray(arguments[0])) {
             initial = Array.from(arguments[0])
-        } else {
+        } else if (arguments.length && arguments[0]) {
             initial = Array.from(arguments)
         }
-        super(...initial)
-        this.setConfig()
-    }
-    setConfig (config) {
-        /*
-        * Set options
-        */
-        this.separator = config && config.separator ? config.separator : "__"
-        // NOTE: date comparisons depend on moment.js
-        if (window.moment) {
-            this.date_formats = config && config.date_formats ? config.date_formats : [
-                "DD/MM/YYYY",
-                "DD-MM-YYYY",
-                "DD.MM.YYYY",
-                "DD/MM/YYYY HH:mm",
-                "DD-MM-YYYY HH:mm",
-                "DD.MM.YYYY HH:mm",
-                "YYYY-MM-DDThh:mm:ss",
-                "YYYY/MM/DD",
-                "YYYY-MM-DD",
-                "YYYY.MM.DD",
-                "YYYY/MM/DD HH:mm",
-                "YYYY-MM-DD HH:mm",
-                "YYYY.MM.DD HH:mm",
-            ]
+        for (var i = 0; i < initial.length; i++) {
+            this.push(initial[i])
         }
     }
-    getConfig () {
+    get separator () {
+        return "__"
+    }
+    get date_formats () {
+        return [
+            "DD/MM/YYYY",
+            "DD-MM-YYYY",
+            "DD.MM.YYYY",
+            "DD/MM/YYYY HH:mm",
+            "DD-MM-YYYY HH:mm",
+            "DD.MM.YYYY HH:mm",
+            "YYYY-MM-DDThh:mm:ss",
+            "YYYY/MM/DD",
+            "YYYY-MM-DD",
+            "YYYY.MM.DD",
+            "YYYY/MM/DD HH:mm",
+            "YYYY-MM-DD HH:mm",
+            "YYYY.MM.DD HH:mm",
+        ]
+    }
+    static setConfig (config) {
         /*
-        * Get current options
+        * Set QuerySet config
         */
-        return {
-            "separator": this.separator,
-            "date_formats": this.date_formats,
+        if (!config) {
+            return
+        }
+        if (config.separator) {
+            Object.defineProperty(QuerySet.prototype, "separator", {get: function () {return config.separator}});
+        }
+        // NOTE: date comparisons depend on moment.js
+        if (window.moment && config.date_formats) {
+            Object.defineProperty(QuerySet.prototype, "date_formats", {get: function () {return config.date_formats}});
         }
     }
     get (query) {
@@ -104,13 +108,25 @@ class QuerySet extends Array {
     update (data) {
         /*
         * Update set of fields on all objects in QuerySet
+        * or one particular object if data contains 'id' or 'pk'
         */
         if (QuerySet.get_pk(data)) {
-            for (var i = 0; i < this.length; i++) {
-                for (var field in data) {
-                    if (data.hasOwnProperty(field)) {
-                        this[i][field] = data[field]
-                    }
+            let object = this.get(QuerySet.get_pk(data))
+            if (!object) {
+                return this
+            }
+            let index = this.indexOf(object)
+            for (var field in data) {
+                if (data.hasOwnProperty(field)) {
+                    this[index][field] = data[field]
+                }
+            }
+            return this
+        }
+        for (var i = 0; i < this.length; i++) {
+            for (var field in data) {
+                if (data.hasOwnProperty(field)) {
+                    this[i][field] = data[field]
                 }
             }
         }
@@ -372,18 +388,14 @@ class QuerySet extends Array {
         * returns new QuerySet
         */
         if (arguments.length == 1 && arguments[0] instanceof Function) {
-            var ret = super.filter(arguments[0])
-            ret.setConfig(this.getConfig())
-            return ret;
+            return super.filter(arguments[0]);
         }
         var query = []
         for (var i = 0; i < arguments.length; i++) {
             query.push(arguments[i])
         }
         if (!query.length) {
-            var ret = new QuerySet(this)
-            ret.setConfig(this.getConfig())
-            return ret;
+            return new QuerySet(this)
         }
         if (!Array.isArray(query)) {
             query = [query]
@@ -391,16 +403,14 @@ class QuerySet extends Array {
         var separator = this.separator
         var date_formats = this.date_formats
         var filter = this.getFilter
-        var ret = this.filter(function(item) {
+        return this.filter(function(item) {
             for (var i = 0; i < query.length; i++) {
                 if (filter(item, query[i], true, separator, date_formats)) {
                     return true
                 }
             }
             return false
-        });
-        ret.setConfig(this.getConfig())
-        return ret;
+        });;
     }
     exclude () {
         /*
@@ -412,9 +422,7 @@ class QuerySet extends Array {
             query.push(arguments[i])
         }
         if (!query.length) {
-            var ret = new QuerySet(this)
-            ret.setConfig(this.getConfig())
-            return ret;
+            return new QuerySet(this)
         }
         if (!Array.isArray(query)) {
             query = [query]
@@ -422,7 +430,7 @@ class QuerySet extends Array {
         var separator = this.separator
         var date_formats = this.date_formats
         var filter = this.getFilter
-        var ret = new QuerySet(this.filter(function(item) {
+        return new QuerySet(this.filter(function(item) {
             for (var i = 0; i < query.length; i++) {
                 if (filter(item, query[i], false, separator, date_formats)) {
                     return true
@@ -430,8 +438,6 @@ class QuerySet extends Array {
             }
             return false
         }));
-        ret.setConfig(this.getConfig())
-        return ret;
     }
     remove (query) {
         /*
@@ -505,9 +511,7 @@ class QuerySet extends Array {
         for (var i = 0; i < this.length; i++) {
             getNested(this[i], sub_queries, values)
         }
-        var ret = new QuerySet(values)
-        ret.setConfig(this.getConfig())
-        return ret;
+        return new QuerySet(values);
     }
     sum (query) {
         /*
@@ -516,9 +520,12 @@ class QuerySet extends Array {
         if (!this.length) {
             return 0
         }
-        var values_list = this.values_list(query)
+        var values_list = this
+        if (query) {
+            values_list = this.values_list(query)
+        }
         if (!values_list.length) {
-            return null
+            return 0
         }
         return values_list.reduce((total, cuurent) => total + cuurent)
     }
@@ -529,7 +536,7 @@ class QuerySet extends Array {
         if (!this.length) {
             return 0
         }
-        return this.sum(field) / this.length;
+        return this.sum(query) / this.length;
     }
     min (query) {
         /*
