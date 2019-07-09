@@ -1,6 +1,6 @@
 /**
  * --------------------------------------------------------------------------
- * QuerySet (v1.0.3): queryset.js
+ * QuerySet (v1.0.4): queryset.js
  * Licensed under MIT (https://github.com/Worldrider/queryset/blob/master/LICENSE.txt)
  * --------------------------------------------------------------------------
  */
@@ -527,7 +527,7 @@ class QuerySet extends Array {
         if (!values_list.length) {
             return 0
         }
-        return values_list.reduce((total, cuurent) => total + cuurent)
+        return values_list.reduce((total, current) => parseFloat(total) + parseFloat(current))
     }
     avg (query) {
         /*
