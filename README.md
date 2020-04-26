@@ -396,4 +396,4 @@ Defaults are:
 
 [MIT](http://opensource.org/licenses/MIT)
 
-Copyright (c) 2019, Eugene Ivanov
+Copyright (c) 2020, Eugene Ivanov
