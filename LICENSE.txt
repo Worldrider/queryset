@@ -1,6 +1,6 @@
 The MIT License (MIT)
 
-Copyright (c) 2019 Eugene Ivanov
+Copyright (c) 2020 Eugene Ivanov
 
 All rights reserved.
 

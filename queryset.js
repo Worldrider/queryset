@@ -1,6 +1,6 @@
 /**
  * --------------------------------------------------------------------------
- * QuerySet (v1.0.4): queryset.js
+ * QuerySet (v1.1.0): queryset.js
  * Licensed under MIT (https://github.com/Worldrider/queryset/blob/master/LICENSE.txt)
  * --------------------------------------------------------------------------
  */
@@ -46,7 +46,7 @@ class QuerySet extends Array {
         } else if (arguments.length && arguments[0]) {
             initial = Array.from(arguments)
         }
-        for (var i = 0; i < initial.length; i++) {
+        for (let i = 0; i < initial.length; i++) {
             this.push(initial[i])
         }
     }
@@ -95,8 +95,8 @@ class QuerySet extends Array {
             return null;
         }
         if (Number.isInteger(query) || query.constructor === String) {
-            for (var i = 0; i < this.length; i++) {
-                if (QuerySet.get_pk(this[i]) == parseInt(query)) {
+            for (let i = 0; i < this.length; i++) {
+                if (QuerySet.get_pk(this[i]) == query.toString()) {
                     return this[i];
                 }
             }
@@ -116,15 +116,15 @@ class QuerySet extends Array {
                 return this
             }
             let index = this.indexOf(object)
-            for (var field in data) {
+            for (let field in data) {
                 if (data.hasOwnProperty(field)) {
                     this[index][field] = data[field]
                 }
             }
             return this
         }
-        for (var i = 0; i < this.length; i++) {
-            for (var field in data) {
+        for (let i = 0; i < this.length; i++) {
+            for (let field in data) {
                 if (data.hasOwnProperty(field)) {
                     this[i][field] = data[field]
                 }
@@ -144,7 +144,7 @@ class QuerySet extends Array {
                 return true
             }
             if (obj.constructor === Object) {
-                for(var prop in obj) {
+                for(let prop in obj) {
                     if(obj.hasOwnProperty(prop)) {
                         return false;
                     }
@@ -154,9 +154,9 @@ class QuerySet extends Array {
             return false
         }
         function getMatch (obj, path, value) {
-            for (var i = 0; i < path.length; i++) {
-                var key = path[i]
-                if (obj.hasOwnProperty(key) || ((key == "id" || key == "pk") && QuerySet.get_pk(obj))) {
+            for (let i = 0; i < path.length; i++) {
+                let key = path[i]
+                if (obj && obj.hasOwnProperty(key) || ((key == "id" || key == "pk") && QuerySet.get_pk(obj))) {
                     // automatically check both 'id' or 'pk' if either present in parameters
                     if (key == "id" || key == "pk") {
                         obj = QuerySet.get_pk(obj)
@@ -176,8 +176,8 @@ class QuerySet extends Array {
                                 return isEmpty(obj)
                             }
                         }
-                        var nested_path = path.slice(i + 1)
-                        for (var j = 0; j < obj.length; j++) {
+                        let nested_path = path.slice(i + 1)
+                        for (let j = 0; j < obj.length; j++) {
                             return getMatch(obj[j], nested_path, value)
                         }
                     } else {
@@ -267,7 +267,7 @@ class QuerySet extends Array {
                             }
                         } else if (key == "in") {
                             if (value != null && Array.isArray(value)) {
-                                for (var k = 0; k < value.length; k++) {
+                                for (let k = 0; k < value.length; k++) {
                                     if (obj == value[k]) {
                                         return true
                                     }
@@ -275,11 +275,11 @@ class QuerySet extends Array {
                             }
                         } else if (key == "range") {
                             if (value != null && Array.isArray(value)) {
-                                var left = value[0]
-                                var right = value[value.length - 1]
-                                var x = QuerySet.parseDate(obj, date_formats)
-                                var a = QuerySet.parseDate(left, date_formats)
-                                var b = QuerySet.parseDate(right, date_formats)
+                                let left = value[0]
+                                let right = value[value.length - 1]
+                                let x = QuerySet.parseDate(obj, date_formats)
+                                let a = QuerySet.parseDate(left, date_formats)
+                                let b = QuerySet.parseDate(right, date_formats)
                                 if (a && b) {
                                     if (x >= a && x <= b) {
                                         return true
@@ -290,7 +290,7 @@ class QuerySet extends Array {
                             }
                         // } else if (key == "not_in") {
                         //     if (value != null && Array.isArray(value)) {
-                        //         for (var k = 0; k < value.length; k++) {
+                        //         for (let k = 0; k < value.length; k++) {
                         //             if (obj == value[k]) {
                         //                 return false
                         //             }
@@ -299,8 +299,8 @@ class QuerySet extends Array {
                         //     }
                         } else if (key == "lt") {
                             if (value != null) {
-                                var a = QuerySet.parseDate(obj, date_formats)
-                                var b = QuerySet.parseDate(value, date_formats)
+                                let a = QuerySet.parseDate(obj, date_formats)
+                                let b = QuerySet.parseDate(value, date_formats)
                                 if (a && b) {
                                     if (a < b) {
                                         return true
@@ -311,8 +311,8 @@ class QuerySet extends Array {
                             }
                         } else if (key == "lte") {
                             if (value != null) {
-                                var a = QuerySet.parseDate(obj, date_formats)
-                                var b = QuerySet.parseDate(value, date_formats)
+                                let a = QuerySet.parseDate(obj, date_formats)
+                                let b = QuerySet.parseDate(value, date_formats)
                                 if (a && b) {
                                     if (a <= b) {
                                         return true
@@ -323,8 +323,8 @@ class QuerySet extends Array {
                             }
                         } else if (key == "gt") {
                             if (value != null) {
-                                var a = QuerySet.parseDate(obj, date_formats)
-                                var b = QuerySet.parseDate(value, date_formats)
+                                let a = QuerySet.parseDate(obj, date_formats)
+                                let b = QuerySet.parseDate(value, date_formats)
                                 if (a && b) {
                                     if (a > b) {
                                         return true
@@ -335,8 +335,8 @@ class QuerySet extends Array {
                             }
                         } else if (key == "gte") {
                             if (value != null) {
-                                var a = QuerySet.parseDate(obj, date_formats)
-                                var b = QuerySet.parseDate(value, date_formats)
+                                let a = QuerySet.parseDate(obj, date_formats)
+                                let b = QuerySet.parseDate(value, date_formats)
                                 if (a && b) {
                                     if (a >= b) {
                                         return true
@@ -360,9 +360,9 @@ class QuerySet extends Array {
             }
             return false
         }
-        var result = true
-        for(var key in query) {
-            var path = key.split(separator)
+        let result = true
+        for(let key in query) {
+            let path = key.split(separator)
             if (getMatch(item, path, query[key])) {
                 if (match) {
                     // return true
@@ -390,8 +390,8 @@ class QuerySet extends Array {
         if (arguments.length == 1 && arguments[0] instanceof Function) {
             return super.filter(arguments[0]);
         }
-        var query = []
-        for (var i = 0; i < arguments.length; i++) {
+        let query = []
+        for (let i = 0; i < arguments.length; i++) {
             query.push(arguments[i])
         }
         if (!query.length) {
@@ -400,11 +400,11 @@ class QuerySet extends Array {
         if (!Array.isArray(query)) {
             query = [query]
         }
-        var separator = this.separator
-        var date_formats = this.date_formats
-        var filter = this.getFilter
+        let separator = this.separator
+        let date_formats = this.date_formats
+        let filter = this.getFilter
         return this.filter(function(item) {
-            for (var i = 0; i < query.length; i++) {
+            for (let i = 0; i < query.length; i++) {
                 if (filter(item, query[i], true, separator, date_formats)) {
                     return true
                 }
@@ -417,8 +417,8 @@ class QuerySet extends Array {
         * Filter queryset by dictionary of fields and values
         * returns new QuerySet
         */
-        var query = []
-        for (var i = 0; i < arguments.length; i++) {
+        let query = []
+        for (let i = 0; i < arguments.length; i++) {
             query.push(arguments[i])
         }
         if (!query.length) {
@@ -427,11 +427,11 @@ class QuerySet extends Array {
         if (!Array.isArray(query)) {
             query = [query]
         }
-        var separator = this.separator
-        var date_formats = this.date_formats
-        var filter = this.getFilter
+        let separator = this.separator
+        let date_formats = this.date_formats
+        let filter = this.getFilter
         return new QuerySet(this.filter(function(item) {
-            for (var i = 0; i < query.length; i++) {
+            for (let i = 0; i < query.length; i++) {
                 if (filter(item, query[i], false, separator, date_formats)) {
                     return true
                 }
@@ -439,7 +439,16 @@ class QuerySet extends Array {
             return false
         }));
     }
-    remove (query) {
+    remove (x) {
+        /*
+        * Remove the first item from the list whose value is equal to x
+        */
+        let index = this.indexOf(x)
+        if (index !== -1) {
+            this.splice(index, 1);
+        }
+    }
+    delete (query) {
         /*
         * Get by id or find all by condition and delete from list
         *
@@ -449,19 +458,30 @@ class QuerySet extends Array {
             return null;
         }
         if (Number.isInteger(query) || query.constructor === String) {
-            for (var i = 0; i < this.length; i++) {
-                if (QuerySet.get_pk(this[i]) == parseInt(query)) {
+            for (let i = 0; i < this.length; i++) {
+                if (QuerySet.get_pk(this[i]) == query.toString()) {
                     this.splice(i, 1);
                     return null;
                 }
             }
         } else {
-            var to_pop = this.filter(query);
-            for (var i = 0; i < to_pop.length; i++) {
-                this.pop(QuerySet.get_pk(to_delete[i]));
+            let to_pop = this.filter(query);
+            for (let i = 0; i < to_pop.length; i++) {
+                let index = this.indexOf(to_pop[i])
+                if (index !== -1) {
+                    this.pop(index);
+                }
             }
         }
         return null;
+    }
+    clear () {
+        /*
+        * Delete all objects in queryset
+        */
+        while (this.length) {
+            this.pop();
+        }
     }
     values_list (query) {
         /*
@@ -474,13 +494,13 @@ class QuerySet extends Array {
         if (!this.length) {
             return new QuerySet([])
         }
-        var separator = this.separator
-        var sub_queries = query.split(separator)
-        var values = [];
+        let separator = this.separator
+        let sub_queries = query.split(separator)
+        let values = [];
 
         function getNested (obj, path, values) {
-            for (var i = 0; i < path.length; i++) {
-                if (obj.hasOwnProperty(path[i]) || ((path[i] == "id" || path[i] == "pk") && QuerySet.get_pk(obj))) {
+            for (let i = 0; i < path.length; i++) {
+                if (obj && obj.hasOwnProperty(path[i]) || ((path[i] == "id" || path[i] == "pk") && QuerySet.get_pk(obj))) {
                     // automatically check both 'id' or 'pk' if either present in parameters
                     if ((path[i] == "id" || path[i] == "pk") && QuerySet.get_pk(obj)) {
                         obj = QuerySet.get_pk(obj)
@@ -490,12 +510,12 @@ class QuerySet extends Array {
                     // obj = obj[path[i]]
                     if (Array.isArray(obj)) {
                         if (i == path.length - 1) {
-                            for (var j = 0; j < obj.length; j++) {
+                            for (let j = 0; j < obj.length; j++) {
                                 values.push(obj[j])
                             }
                         } else {
-                            var nested_path = path.slice(i + 1)
-                            for (var j = 0; j < obj.length; j++) {
+                            let nested_path = path.slice(i + 1)
+                            for (let j = 0; j < obj.length; j++) {
                                 getNested(obj[j], nested_path, values)
                             }
                         }
@@ -508,7 +528,7 @@ class QuerySet extends Array {
             }
         }
 
-        for (var i = 0; i < this.length; i++) {
+        for (let i = 0; i < this.length; i++) {
             getNested(this[i], sub_queries, values)
         }
         return new QuerySet(values);
@@ -520,7 +540,7 @@ class QuerySet extends Array {
         if (!this.length) {
             return 0
         }
-        var values_list = this
+        let values_list = this
         if (query) {
             values_list = this.values_list(query)
         }
@@ -545,14 +565,14 @@ class QuerySet extends Array {
         if (!this.length) {
             return null
         }
-        var date_formats = this.date_formats
-        var values_list = this.values_list(query)
+        let date_formats = this.date_formats
+        let values_list = this.values_list(query)
         if (!values_list.length) {
             return null
         }
         return values_list.reduce(function(m, x) {
-            var a = QuerySet.parseDate(m, date_formats)
-            var b = QuerySet.parseDate(x, date_formats)
+            let a = QuerySet.parseDate(m, date_formats)
+            let b = QuerySet.parseDate(x, date_formats)
             if (a && b) {
                 return a < b ? m : x
             }
@@ -566,14 +586,14 @@ class QuerySet extends Array {
         if (!this.length) {
             return null
         }
-        var date_formats = this.date_formats
-        var values_list = this.values_list(query)
+        let date_formats = this.date_formats
+        let values_list = this.values_list(query)
         if (!values_list.length) {
             return null
         }
         return values_list.reduce(function(m, x) {
-            var a = QuerySet.parseDate(m, date_formats)
-            var b = QuerySet.parseDate(x, date_formats)
+            let a = QuerySet.parseDate(m, date_formats)
+            let b = QuerySet.parseDate(x, date_formats)
             if (a && b) {
                 return a > b ? m : x
             }
@@ -589,16 +609,16 @@ class QuerySet extends Array {
         *
         * returns current QuerySet
         */
-        var fields = []
-        for (var i = 0; i < arguments.length; i++) {
+        let fields = []
+        for (let i = 0; i < arguments.length; i++) {
             fields.push(arguments[i])
         }
-        var separator = this.separator
-        var date_formats = this.date_formats
+        let separator = this.separator
+        let date_formats = this.date_formats
 
         function getNested (obj, path) {
-            for (var i = 0; i < path.length; i++) {
-                if (obj.hasOwnProperty(path[i]) || ((path[i] == "id" || path[i] == "pk") && QuerySet.get_pk(obj))) {
+            for (let i = 0; i < path.length; i++) {
+                if (obj && obj.hasOwnProperty(path[i]) || ((path[i] == "id" || path[i] == "pk") && QuerySet.get_pk(obj))) {
                     // automatically check both 'id' or 'pk' if either present in parameters
                     if ((path[i] == "id" || path[i] == "pk") && QuerySet.get_pk(obj)) {
                         obj = QuerySet.get_pk(obj)
@@ -619,32 +639,32 @@ class QuerySet extends Array {
             }
             return obj
         }
-        for (var i = 0; i < fields.length; i++) {
-            var field = fields[i];
-            var desc = field[0] == "-"
+        for (let i = 0; i < fields.length; i++) {
+            let field = fields[i];
+            let desc = field[0] == "-"
             this.sort(function(a, b) {
                 if (desc) {
-                    var path = field.substr(1).split(separator)
-                    var x = getNested(b, path)
-                    var y = getNested(a, path)
+                    let path = field.substr(1).split(separator)
+                    let x = getNested(b, path)
+                    let y = getNested(a, path)
                     if (typeof x === "boolean" && typeof y === "boolean") {
                         return (x === y) ? 0 : x ? -1 : 1;
                     }
-                    var date_x = QuerySet.parseDate(x, date_formats)
-                    var date_y = QuerySet.parseDate(y, date_formats)
+                    let date_x = QuerySet.parseDate(x, date_formats)
+                    let date_y = QuerySet.parseDate(y, date_formats)
                     if (date_x && date_y) {
                         return (date_x === date_y) ? 0 : date_x > date_y ? 1 : -1
                     }
                     return (x === y) ? 0 : x > y ? 1 : -1
                 }
-                var path = field.split(separator)
-                var x = getNested(b, path)
-                var y = getNested(a, path)
+                let path = field.split(separator)
+                let x = getNested(b, path)
+                let y = getNested(a, path)
                 if (typeof x === "boolean" && typeof y === "boolean") {
                     return (x === y) ? 0 : y ? -1 : 1;
                 }
-                var date_x = QuerySet.parseDate(x, date_formats)
-                var date_y = QuerySet.parseDate(y, date_formats)
+                let date_x = QuerySet.parseDate(x, date_formats)
+                let date_y = QuerySet.parseDate(y, date_formats)
                 if (date_x && date_y) {
                     return (date_x === date_y) ? 0 : date_x < date_y ? 1 : -1
                 }
@@ -654,19 +674,19 @@ class QuerySet extends Array {
         return this
     }
     distinct () {
-        var fields = []
-        for (var i = 0; i < arguments.length; i++) {
+        let fields = []
+        for (let i = 0; i < arguments.length; i++) {
             fields.push(arguments[i])
         }
         if (!fields.length) {
-            var set = new Set(this)
+            let set = new Set(this)
             return new QuerySet(Array.from(set))
         }
 
-        var separator = this.separator
+        let separator = this.separator
         function getNested (obj, path) {
-            for (var i = 0; i < path.length; i++) {
-                if (obj.hasOwnProperty(path[i]) || ((path[i] == "id" || path[i] == "pk") && QuerySet.get_pk(obj))) {
+            for (let i = 0; i < path.length; i++) {
+                if (obj && obj.hasOwnProperty(path[i]) || ((path[i] == "id" || path[i] == "pk") && QuerySet.get_pk(obj))) {
                     // automatically check both 'id' or 'pk' if either present in parameters
                     if ((path[i] == "id" || path[i] == "pk") && QuerySet.get_pk(obj)) {
                         obj = QuerySet.get_pk(obj)
@@ -690,10 +710,10 @@ class QuerySet extends Array {
 
         let results = new QuerySet();
         for (const item of this) {
-            var is_distinct = true
-            for (var i = 0; i < fields.length; i++) {
-                var args = {}
-                var path = fields[i].split(separator)
+            let is_distinct = true
+            for (let i = 0; i < fields.length; i++) {
+                let args = {}
+                let path = fields[i].split(separator)
                 args[fields[i]] = getNested(item, path)
                 if (results.filter(args).exists()) {
                     is_distinct = false
@@ -703,7 +723,7 @@ class QuerySet extends Array {
                 results.append(item);
             }
         }
-        var set = new Set(results)
+        let set = new Set(results)
         return new QuerySet(Array.from(set))
     }
 
@@ -722,21 +742,35 @@ class QuerySet extends Array {
         */
         this.push(data);
     }
+    prepend (data) {
+        /*
+        * Add object to queryset
+        */
+        this.unshift(data);
+    }
     extend (objects) {
         /*
         * Add multiple objects to queryset
         */
-        for (var i = 0; i < objects.length; i++) {
+        for (let i = 0; i < objects.length; i++) {
             this.push(objects[i]);
         }
     }
-    delete () {
+    pop (index) {
         /*
-        * Delete all objects in queryset
+        * Remove the item at the given position in the list, and return it.
+        * If no index is specified, .pop() removes and returns the last item
         */
-        while (this.length) {
-            this.pop();
+        if (index != undefined) {
+            if (this.length > index && this[index]) {
+                return this.splice(index, 1)[0]
+            }
+            return undefined
         }
+        if (this.length) {
+            return this.splice(this.length - 1, 1)[0]
+        }
+        return undefined
     }
     first () {
         /*
@@ -775,12 +809,15 @@ class QuerySet extends Array {
         if (!window.moment) {
             return date
         }
+        if (!date) {
+            return date
+        }
         if (date.constructor == Date) {
             return date
         }
         if (date.constructor == String) {
-            for (var i = 0; i < date_formats.length; i++) {
-                var d = moment(date, date_formats[i])
+            for (let i = 0; i < date_formats.length; i++) {
+                let d = moment(date, date_formats[i])
                 if (d.isValid() && d.format(date_formats[i]) == date) {
                     return d.toDate()
                 }
@@ -792,10 +829,10 @@ class QuerySet extends Array {
         /*
         * Get object id if either 'id' or 'pk' is in object
         *
-        * return integer id
+        * return string or null
         */
         if (object) {
-            return object.id ? parseInt(object.id) : object.pk ? parseInt(object.pk) : null;
+            return object.id ? object.id.toString() : object.pk ? object.pk.toString() : null;
         }
         return null;
     }

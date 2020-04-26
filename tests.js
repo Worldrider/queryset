@@ -1,4 +1,4 @@
-var list = [
+let list = [
     {
         id: 1,
         name: "John Doe",
@@ -78,6 +78,7 @@ var list = [
             },
         ],
     }, {
+        pk: 3,
         name: "Admin",
         group: "users",
         profile: {
@@ -86,24 +87,26 @@ var list = [
             active: true,
             kudos: 1000,
         },
-        pk: 3,
     },
 ]
 
-var qs = new QuerySet(list)
 
 function assertEqual(a, b) {
+    a = Array.isArray(a) ? a.map(x => x.toString()) : a
+    b = Array.isArray(b) ? b.map(x => x.toString()) : b
     if (JSON.stringify(a) != JSON.stringify(b)) {
-        // console.error(`${a} is not equal ${b}`)
-        throw new Error(`${a} is not equal ${b}`)
+        console.error(`${a} is not equal ${b}`)
+        // throw new Error(`${a} is not equal ${b}`)
     }
 }
 function assertIsNotNull(x) {
     if (x == null) {
-        // console.error(`unexpectedly null`)
-        throw new Error(`unexpectedly null`)
+        console.error(`unexpectedly null`)
+        // throw new Error(`unexpectedly null`)
     }
 }
+
+let qs = new QuerySet(list)
 
 assertEqual(qs.values_list("id"), [1, 2, 3])
 assertEqual(qs.values_list("pk"), [1, 2, 3])
@@ -190,6 +193,7 @@ assertEqual(qs.filter({invoices__items__amount__range: [100, 1000]}).count(), 1)
 assertEqual(qs.values_list("invoices").filter({date__range: ["18/05/2019", "13/12/2019"]}).count(), 3)
 assertEqual(qs.values_list("invoices").min("date"), "15/03/2019")
 assertEqual(qs.values_list("invoices").max("date"), "13/12/2019")
+assertEqual(qs.values_list("invoices__amount"), [500, 1000, 100, 100])
 assertEqual(qs, qs.toArray())
 assertEqual(qs.filter({invoices__id__in: [1, 2, 3], profile__active: true}).exclude({name__icontains: "Adm"}).count(), 1)
 
@@ -228,8 +232,44 @@ assertEqual(qs.update({test_field: 42}).avg("test_field"), 42)
 assertEqual(qs.update({id: 3, test_field: 100}).avg("test_field"), 71)
 assertEqual(qs.get(3).test_field, 100)
 
-qs.delete()
+qs = qs.distinct('pk')
+assertEqual(qs.count(), 3)
+
+assertEqual(qs.filter({pk: 3}).count(), 1)
+qs.delete({pk: 3})
+assertEqual(qs.filter({pk: 3}).count(), 0)
+assertEqual(qs.count(), 2)
+
+assertEqual(qs.filter({pk: 2}).count(), 1)
+qs.delete({profile__kudos: 100})
+assertEqual(qs.filter({pk: 2}).count(), 0)
+assertEqual(qs.count(), 1)
+
+qs.clear()
+assertEqual(qs.pop(1), undefined)
+assertEqual(qs.pop(), undefined)
 assertEqual(qs.count(), 0)
+
+qs.extend(list)
+assertEqual(qs.count(), 3)
+assertEqual(qs.first().id, 1)
+qs.pop(0)
+assertEqual(qs.filter({id: 1}).count(), 0)
+assertEqual(qs.pop(42), undefined)
+
+let obj = qs[1]
+assertEqual(qs.indexOf(obj), 1)
+qs.remove(obj)
+assertEqual(qs.indexOf(obj), -1)
+
+qs.clear()
+
+qs.append({test: 'test'})
+qs.prepend(obj)
+assertEqual(qs.indexOf(obj), 0)
+
+qs.clear()
+
 assertEqual(qs.values_list("invoices").min("date"), null)
 assertEqual(qs.values_list("invoices").max("date"), null)
 assertEqual(qs.values_list("invoices").sum("amount"), 0)

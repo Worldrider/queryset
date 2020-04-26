@@ -95,46 +95,6 @@ qs.toArray()
     </thead>
     <tbody>
         <tr>
-            <td>get</td>
-            <td>
-                Get by id or find by condition </br>
-            </td>
-            <td>
-                <pre lang="javascript"><code>.get({id: 42})
-.get({pk: "42"})
-// 'pk' and 'id'
-// work in same way in all lookups
-// and can be string or int
-.get(42)
-.get("42")
-</br>
-.get({name: "Jane"})
-</br>
-.get({profile__active: true})
-// equivalent to
-.filter({profile__active: true}).first()</code></pre>
-            </td>
-        </tr>
-        <tr>
-            <td>update</td>
-            <td>Update set of fields on all objects in queryset
-</br>
-Or update a single element if 'id' or 'pk' is there</td>
-            <td>
-                <pre lang="javascript"><code>.update({amount: 1000})
-</br>
-// NOTE: nested fields are not supported yet
-.update({invoices__amount: 1000})
-</br>
-// this will create 'invoices__amount'
-// property on every object in queryset
-</br>
-// this will update single element
-.update({id: 42, name: "John Doe"})
-</code></pre>
-            </td>
-        </tr>
-        <tr>
             <td>filter</td>
             <td>Filter queryset by dictionary of fields and values.
 </br>
@@ -162,11 +122,24 @@ if pass function as a parameter it works as Array.filter</td>
             </td>
         </tr>
         <tr>
-            <td>remove</td>
-            <td>Get by id or find all by condition and delete from list</td>
+            <td>get</td>
             <td>
-                <pre lang="javascript"><code>.remove(42)
-.remove({id: 42})</code></pre>
+                Get by id or find by condition </br>
+            </td>
+            <td>
+                <pre lang="javascript"><code>.get({id: 42})
+.get({pk: "42"})
+// 'pk' and 'id'
+// work in same way in all lookups
+// and can be string or int
+.get(42)
+.get("42")
+</br>
+.get({name: "Jane"})
+</br>
+.get({profile__active: true})
+// equivalent to
+.filter({profile__active: true}).first()</code></pre>
             </td>
         </tr>
         <tr>
@@ -177,6 +150,105 @@ if pass function as a parameter it works as Array.filter</td>
 qs.values_list("name")
 </br>
 qs.values_list("invoices").sum("amount")</code></pre>
+            </td>
+        </tr>
+        <tr>
+            <td>order_by</td>
+            <td>
+                Order queryset by field or list of fields </br>
+                <b><i>Does not order by nested lists, only by object properties</b></i>
+            </td>
+            <td>
+                <pre lang="javascript"><code>.order_by("profile__active")
+.order_by("id", "amount")</code></pre>
+            </td>
+        </tr>
+        <tr>
+            <td>distinct</td>
+            <td>
+                Return unique items of queryset</br>
+                Can be applied accross multiple fields</br>
+                <b><i>Does not support nested lists, only by object properties</b></i>
+            </td>
+            <td>
+                <pre lang="javascript"><code>.distinct("name")
+.distinct("id", "amount")</code></pre>
+            </td>
+        </tr>
+        <tr>
+            <td>append</td>
+            <td>Add an object to end of queryset</td>
+            <td>
+                <pre lang="javascript"><code>.append({id: 1, name: "Jane"})</code></pre>
+            </td>
+        </tr>
+        <tr>
+            <td>prepend</td>
+            <td>Add an object to beginning of queryset</td>
+            <td>
+                <pre lang="javascript"><code>.prepend({id: 1, name: "Jane"})</code></pre>
+            </td>
+        </tr>
+        <tr>
+            <td>extend</td>
+            <td>Add multiple objects to queryset</td>
+            <td>
+                <pre lang="javascript"><code>.extend([
+  {id: 1, name: "Jane"},
+  {id: 2, name: "John"},
+])</code></pre>
+            </td>
+        </tr>
+        <tr>
+            <td>pop</td>
+            <td>
+                Remove the item at the given position in the list, and return it.<br>
+                If no index is specified, remove and return last item.<br>
+                Return undefined if queryset is empty
+            </td>
+            <td>
+                <pre lang="javascript"><code>.pop(42)
+.pop()</code></pre>
+            </td>
+        </tr>
+        <tr>
+            <td>remove</td>
+            <td>Remove the first item from the list whose value is equal to x</td>
+            <td>
+                <pre lang="javascript"><code>.remove(x)</code></pre>
+            </td>
+        </tr>
+        <tr>
+            <td>delete</td>
+            <td>Remove items that match query</td>
+            <td>
+                <pre lang="javascript"><code>.delete({name: "Jane"})</code></pre>
+            </td>
+        </tr>
+        <tr>
+            <td>clear</td>
+            <td>Remove all items</td>
+            <td>
+                <pre lang="javascript"><code>.clear()</code></pre>
+            </td>
+        </tr>
+        <tr>
+            <td>update</td>
+            <td>Update set of fields on all objects in queryset
+</br>
+Or update a single element if 'id' or 'pk' is provided</td>
+            <td>
+                <pre lang="javascript"><code>.update({amount: 1000})
+</br>
+// NOTE: nested fields are not supported yet
+.update({invoices__amount: 1000})
+</br>
+// this will create 'invoices__amount'
+// property on every object in queryset
+</br>
+// this will update single element
+.update({id: 42, name: "John Doe"})
+</code></pre>
             </td>
         </tr>
         <tr>
@@ -207,53 +279,6 @@ Works with dates too</td>
 Works with dates too</td>
             <td>
                 <pre lang="javascript"><code>.max("amount")</code></pre>
-            </td>
-        </tr>
-        <tr>
-            <td>order_by</td>
-            <td>
-                Order queryset by field or list of fields </br>
-                <b><i>Does not order by nested lists, only by objects</b></i>
-            </td>
-            <td>
-                <pre lang="javascript"><code>.order_by("profile__active")
-.order_by("id", "amount")</code></pre>
-            </td>
-        </tr>
-        <tr>
-            <td>distinct</td>
-            <td>
-                Return unique items of queryset</br>
-                Can be applied accross multiple fields</br>
-                <b><i>Does not support nested lists, only by objects</b></i>
-            </td>
-            <td>
-                <pre lang="javascript"><code>.distinct("name")
-.distinct("id", "amount")</code></pre>
-            </td>
-        </tr>
-        <tr>
-            <td>append</td>
-            <td>Add object to queryset</td>
-            <td>
-                <pre lang="javascript"><code>.append({id: 1, name: "Jane"})</code></pre>
-            </td>
-        </tr>
-        <tr>
-            <td>extend</td>
-            <td>Add multiple objects to queryset</td>
-            <td>
-                <pre lang="javascript"><code>.extend([
-  {id: 1, name: "Jane"},
-  {id: 2, name: "John"},
-])</code></pre>
-            </td>
-        </tr>
-        <tr>
-            <td>delete</td>
-            <td>Delete all objects in queryset</td>
-            <td>
-                <pre lang="javascript"><code>.delete()</code></pre>
             </td>
         </tr>
         <tr>
@@ -363,11 +388,8 @@ Defaults are:
 - chaining date queries: ```start_date___year__gte=2019```
 - detect properties which include separator: ```property__including__separator```
 - values_list ```flat``` option (right now it is always flat)
-- add exceptions on invalid queries
 - support multiple separators ?
 - handle dates independently from [moment.js](https://momentjs.com/) ?
-- implement StdDev ?
-- implement Variance ?
 
 
 ## License
